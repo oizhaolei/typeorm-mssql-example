@@ -1,22 +1,20 @@
 {
   "name": "default",
-  "type": "mysql",
+  "type": "mssql",
   "host": "localhost",
-  "port": 3306,
-  "username": "test",
-  "password": "test",
+  "port": 10413,
+  "username": "streamline",
+  "password": "Streamline0123",
   "database": "test",
   "synchronize": true,
   "logging": false,
-  "entities": [
-    "src/entity/*.js"
-  ],
-  "subscribers": [
-    "src/subscriber/*.js"
-  ],
-  "migrations": [
-    "src/migration/*.js"
-  ],
+  "entities": ["src/entity/*.ts"],
+  "subscribers": ["src/subscriber/*.ts"],
+  "migrations": ["src/migration/*.ts"],
+  "extra": {
+    "validateConnection": false,
+    "trustServerCertificate": true
+  },
   "cli": {
     "entitiesDir": "src/entity",
     "migrationsDir": "src/migration",

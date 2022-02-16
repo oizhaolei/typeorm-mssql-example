@@ -1,25 +1,52 @@
-import {createConnection} from "typeorm";
-import {Post} from "./entity/Post";
-import {Category} from "./entity/Category";
+import { faker } from "@faker-js/faker";
+import { createConnection } from "typeorm";
+import { Post } from "./entity/Post";
+import { Category } from "./entity/Category";
 
-// connection settings are in the "ormconfig.json" file
-createConnection().then(async connection => {
+// Note: The incoming request has too many parameters. The server supports a maximum of 2100 parameters. Reduce the number of parameters and resend the request.
+const chunk = 10;
+const repeat = 1000;
+createConnection()
+  .then(async (connection) => {
+    const queryRunner = connection.createQueryRunner();
 
-    const category1 = new Category();
-    category1.name = "TypeScript";
-    await connection.manager.save(category1);
+    await queryRunner.startTransaction();
 
-    const category2 = new Category();
-    category2.name = "Programming";
-    await connection.manager.save(category2);
+    try {
+      for (var i = 0; i < chunk; ++i) {
+        const posts: Post[] = " "
+          .repeat(repeat)
+          .split("")
+          .map(() => {
+            const category1 = new Category();
+            category1.name = faker.commerce.productName();
 
-    const post = new Post();
-    post.title = "Control flow based type analysis";
-    post.text = `TypeScript 2.0 implements a control flow-based type analysis for local variables and parameters.`;
-    post.categories = [category1, category2];
+            const category2 = new Category();
+            category2.name = faker.commerce.productName();
 
-    await connection.manager.save(post);
+            const post = new Post();
+            post.title = faker.commerce.productName();
+            post.text = faker.commerce.productDescription();
+            post.categories = [category1, category2];
+            return post;
+          });
+        const saveResult = await queryRunner.manager.save(posts);
+        console.log("Post has been saved: ", saveResult.length);
+      }
 
-    console.log("Post has been saved: ", post);
+      await queryRunner.commitTransaction();
 
-}).catch(error => console.log("Error: ", error));
+      const countPost = await queryRunner.manager.count(Post);
+      console.log("countPost:", countPost);
+    } catch (err) {
+      console.log("err:", err);
+
+      // since we have errors let's rollback changes we made
+      await queryRunner.rollbackTransaction();
+    } finally {
+      // you need to release query runner which is manually created:
+      await queryRunner.release();
+    }
+    process.exit();
+  })
+  .catch((error) => console.log("Error: ", error));
